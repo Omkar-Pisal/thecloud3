@@ -31,11 +31,18 @@ while True:
     print(messages)
     response = s3.list_objects_v2(Bucket=input_bucket)
 
-    if 'Contents' in response:
-        for item in response['Contents']:
-            # Get the video key and process the video
-            video_key = item['Key']
-            lambda_client.invoke(FunctionName=function_name, Payload='{"input_key": "' + video_key + '", "output_bucket": "' + output_bucket + '"}')
+
+    if messages['Records'][0]['s3']['object']['key']:
+        for msgs in messages:
+            lambda_client.invoke(FunctionName=function_name, Payload=msgs)
+
+
+
+    # if 'Contents' in response:
+    #     for item in response['Contents']:
+    #         # Get the video key and process the video
+    #         video_key = item['Key']
+    #         lambda_client.invoke(FunctionName=function_name, Payload='{"input_key": "' + video_key + '", "output_bucket": "' + output_bucket + '"}')
 
             # Delete the processed video from input bucket
             # s3.delete_object(Bucket=input_bucket, Key=video_key)
@@ -46,12 +53,12 @@ while True:
     # Continuously monitor output bucket for academic information
     response = s3.list_objects_v2(Bucket=output_bucket)
 
-    if 'Contents' in response:
-        for item in response['Contents']:
-            # Get the academic information key and send it to the SQS queue
-            academic_info_key = item['Key']
-            academic_info_object = s3.get_object(Bucket=output_bucket, Key=academic_info_key)
-            academic_info = academic_info_object['Body'].read().decode('utf-8')
+    # if 'Contents' in response:
+    #     for item in response['Contents']:
+    #         # Get the academic information key and send it to the SQS queue
+    #         academic_info_key = item['Key']
+    #         academic_info_object = s3.get_object(Bucket=output_bucket, Key=academic_info_key)
+    #         academic_info = academic_info_object['Body'].read().decode('utf-8')
 
             # # Send the academic information to the SQS queue
             # responsesqs = sqs.send_message(QueueUrl=queue['QueueUrl'], MessageBody=academic_info)
@@ -72,4 +79,4 @@ while True:
     #         sqs.delete_message(QueueUrl=queue['QueueUrl'], ReceiptHandle=message['ReceiptHandle'])
 
     # Sleep for 5 seconds before checking for new academic information again
-    time.sleep(5)
+    # time.sleep(5)
