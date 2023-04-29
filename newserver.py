@@ -1,6 +1,8 @@
 import boto3
 import time
 import os
+import json
+
 import urllib.parse
 
 os.environ['AWS_ACCESS_KEY_ID'] = ''
@@ -23,7 +25,7 @@ output_bucket = 'cloudy-output-bucket-project2'
 
 # Set up Lambda function name
 function_name = 'project_2'
-
+print("Program started")
 # Continuously monitor input bucket for new videos
 while True:
     messages = sqs_client.receive_message(QueueUrl=inputSQS_url, MaxNumberOfMessages=10, MessageAttributeNames=['All'])
@@ -33,21 +35,20 @@ while True:
             msg_body = msg['Body']
             lambda_client.invoke(FunctionName=function_name,Payload=msg_body)
 
-    time.sleep(5)
+    time.sleep(1)
 
     outputmessages = sqs_client.receive_message(QueueUrl=outputSQS_url,MaxNumberOfMessages=10,MessageAttributeName=["All"])
 
     if 'Messages' in outputmessages:
         for outmsg in outputmessages['Messages']:
             outputmsg_body = outmsg['Body']
-            key = urllib.parse.unquote_plus(
-                outputmsg_body['Records'][0]['s3']['object']['key'],
-                encoding='utf-8')
+            data = json.loads(outputmsg_body)
+            key = data['Records'][0]['s3']['object']['key']
+            print(key)
             academic_info_object = s3.get_object(Bucket=output_bucket, Key=key)
             academic_info = academic_info_object['Body'].read().decode('utf-8')
 
             print(academic_info)
 
-    time.sleep(5)
+    time.sleep(1)
 
-    time.sleep(5)
