@@ -33,12 +33,13 @@ def handle_output_message(msg):
     key = data['Records'][0]['s3']['object']['key']
     academic_info_object = s3.get_object(Bucket=output_bucket, Key=key)
     academic_info = academic_info_object['Body'].read().decode('utf-8')
-    print(academic_info)
+    print(key+": "+academic_info)
     sqs_client.delete_message(QueueUrl=outputSQS_url, ReceiptHandle=msg['ReceiptHandle'])
 
 def handle_input_message(msg):
     msg_body = msg['Body']
     lambda_client.invoke(FunctionName=function_name, Payload=msg_body)
+    sqs_client.delete_message(QueueUrl=inputSQS_url,ReceiptHandle=msg['ReceiptHandle'])
 
 def handle_messages():
     while True:
